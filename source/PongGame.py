@@ -8,13 +8,15 @@ from LCD_Class import waveShareDisplay
 from LCD_Constants import *
 from JoyStick_Class import JoySticks
 from PongBall_Class import PongBall
+from Player_Class import Player
 from threading import Thread, Semaphore
 import queue
 import time
 import random
 
 C_MAX_BALLS = 3
-
+C_X_IDX     = 0
+C_Y_IDX     = 1
 #############################################################################################
 # BEGIN - Class Definitions
 #############################################################################################
@@ -24,13 +26,78 @@ class Pong():
         self._joystick      = JoySticks()
         self._balls         = []
         self._spiSem        = Semaphore()
-        self._q             = queue.Queue()
+        self._q1            = queue.Queue()
+        self._q2            = queue.Queue()
+        self._player1       = Player("One")
+        self._player2       = Player("Two")
         self.mExitRequest   = False
+
+    def mNormalizeADC(self, val):
+        if val <= 127:
+            return 0
+
+        elif 127 < val <= 254:
+            return 1
+
+        elif 254 < val <= 381:
+            return 2
+
+        elif 381 < val <= 511:
+            return 3
+
+    def mUpdatePlayerPos(self):
+        p1 = self._q1.get()
+        p2 = self._q2.get()
+        mag1 = p1[C_X_IDX]
+        mag2 = p2[C_X_IDX]
+        # mag1 <= 511
+        if mag1 <= self._joystick.mGetMidVal():
+            moveDir1 = "Left"
+        
+        # mag1 > 511
+        else:
+            mag1 -= 511
+            moveDir1 = "Right"
+
+        # mag2 <= 511
+        if mag2 <= self._joystick.mGetMidVal():
+            moveDir2 = "Left"
+        
+        # mag1 > 511
+        else:
+            mag2 -= 511
+            moveDir2 = "Right"
+
+        mag1 = self.mNormalizeADC(mag1)
+        mag2 = self.mNormalizeADC(mag2)
+        self._player1.mMovePlayer(moveDir1, mag1)
+        self._player2.mMovePlayer(moveDir2, mag2)
+
+    def mErasePaddle(self, player):
+        p = player.mGetLoc()
+        start = p[C_X_IDX] - (player.WIDTH >> 1)
+        end   = p[C_X_IDX] + (player.WIDTH >> 1)
+        self._spiSem.acquire()
+        # TODO: Change this to draw to a page rather than 1 pixel at a time.
+        for i in range(start, end):
+            self._lcd.mSetPixel(i , p[C_Y_IDX], C_COLOR_BLACK)
+            
+        self._spiSem.release()
+
+    def mDrawPaddle(self, player):
+        p = player.mGetLoc()
+        start = p[C_X_IDX] - (player.WIDTH >> 1)
+        end   = p[C_X_IDX] + (player.WIDTH >> 1)
+        self._spiSem.acquire()
+        # TODO: Change this to draw to a page rather than 1 pixel at a time.
+        for i in range(start, end):
+            self._lcd.mSetPixel(i , p[C_Y_IDX], player.color)
+
+        self._spiSem.release()
 
     # This method spawns balls
     def mCreateBall(self, color, location):
-        if len(self._balls) < (C_MAX_BALLS + 1):
-            self._balls.append(PongBall(color,location))
+        self._balls.append(PongBall(color,location))
 
     # Deletes the selected ball object
     def mKillBall(self, ballNum):
@@ -43,20 +110,19 @@ class Pong():
         self._balls[ballNum].mChangeVelocity(newVelocity)
 
     # Creates N balls of random color
-    def mCreatBalls(self, colors, N):
-        if N < C_MAX_BALLS:
-            for i in range(N):
-                startX = 0
-                startY = 0
-                color = colors[random.randint(0, len(colors) - 1)]
-                while startX == 0:
-                    startX = random.randint(-3, 3)
+    def mCreateBalls(self, colors, N):
+        for i in range(N):
+            startX = 0
+            startY = 0
+            color = colors[random.randint(0, len(colors) - 1)]
+            while startX == 0:
+                startX = random.randint(-3, 3)
 
-                while startY == 0:
-                    startY = random.randint(-3, 3)
+            while startY == 0:
+                startY = random.randint(-3, 3)
 
-                self.mCreateBall(color, (100, 100))
-                self.mChangeBallVelocity(i, (startX, startY))
+            self.mCreateBall(color, (100, 100))
+            self.mChangeBallVelocity(i, (startX, startY))
 
     # Moves the ball
     def _mMoveBall(self, ballNum):
@@ -72,19 +138,19 @@ class Pong():
         if self._balls[ballNum].mAlive:
             xy    = self._balls[ballNum].mGetPosition()
             color = self._balls[ballNum].mColor
-            self._lcd.mSetPixel(xy[0],     xy[1],     color)
-            self._lcd.mSetPixel(xy[0] + 1, xy[1],     color)
-            self._lcd.mSetPixel(xy[0],     xy[1] - 1, color)
-            self._lcd.mSetPixel(xy[0] + 1, xy[1] - 1, color)
+            self._lcd.mSetPixel(xy[C_X_IDX],     xy[C_Y_IDX],     color)
+            self._lcd.mSetPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX],     color)
+            self._lcd.mSetPixel(xy[C_X_IDX],     xy[C_Y_IDX] - 1, color)
+            self._lcd.mSetPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX] - 1, color)
 
     # Erases the ball
     def _mEraseBall(self, ballNum):
         if self._balls[ballNum].mAlive:
             xy = self._balls[ballNum].mGetPosition()
-            self._lcd.mClearPixel(xy[0],     xy[1]    )
-            self._lcd.mClearPixel(xy[0] + 1, xy[1]    )
-            self._lcd.mClearPixel(xy[0],     xy[1] - 1)
-            self._lcd.mClearPixel(xy[0] + 1, xy[1] - 1)
+            self._lcd.mClearPixel(xy[C_X_IDX],     xy[C_Y_IDX]    )
+            self._lcd.mClearPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX]    )
+            self._lcd.mClearPixel(xy[C_X_IDX],     xy[C_Y_IDX] - 1)
+            self._lcd.mClearPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX] - 1)
 
     # For now this member function reverses the direction of the ball when
     # it hits the edge of the screen
@@ -93,19 +159,19 @@ class Pong():
             if self._balls[ballNum].mAlive:
                 xy       = self._balls[ballNum].mGetPosition()
                 velocity = self._balls[ballNum].mGetVelocity()
-                xBound = abs(velocity[0])
-                yBound = abs(velocity[1])
+                xBound = abs(velocity[C_X_IDX])
+                yBound = abs(velocity[C_Y_IDX])
                 # Check x coordinates
                 # Add one so we know when the ball is at or below 0
                 # Subtract two so we know when the ball is greater than or at 239
-                if (xy[0] < self._lcd.mX_min + 1 + xBound) or (xy[0] > self._lcd.mX_max - 2 - xBound):
-                    self.mChangeBallVelocity(ballNum, (velocity[0] * -1, velocity[1]))
+                if (xy[C_X_IDX] < self._lcd.mX_min + 1 + xBound) or (xy[C_X_IDX] > self._lcd.mX_max - 2 - xBound):
+                    self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX] * -1, velocity[C_Y_IDX]))
         
-                if (xy[1] < self._lcd.mY_min + 1 + yBound) or (xy[1] > self._lcd.mY_max - 2 - yBound):
-                    self.mChangeBallVelocity(ballNum, (velocity[0], velocity[1] * -1))
+                if (xy[C_Y_IDX] < self._lcd.mY_min + 1 + yBound) or (xy[C_Y_IDX] > self._lcd.mY_max - 2 - yBound):
+                    self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX], velocity[C_Y_IDX] * -1))
 
     def _mBallThreads(self, ballNum):
-        while(1):
+        while(True):
             if not self._balls[ballNum].mAlive:
                 temp = self._balls[ballNum]
                 self._balls.pop(ballNum)
@@ -126,11 +192,13 @@ class Pong():
         
 
     def _mJoyStickThread(self):
-        while(1):
+        while(True):
             if self.mExitRequest == False:
                 self._spiSem.acquire()
                 x0, y0 = self._joystick.mReadJoy0()
-                self._q.put((x0, y0))
+                self._q1.put((x0, y0))
+                x1, y1 = self._joystick.mReadJoy1()
+                self._q2.put((x1, y1))
                 self._spiSem.release()
                 time.sleep(0.05)
             
@@ -138,12 +206,28 @@ class Pong():
                 return
 
     def _mPrintJoyData(self):
-        while(1):
+        while(True):
             if self.mExitRequest == False:
-                data = self._q.get()
-                print("X Data is:" + str(data[0]))
-                print("y Data is:" + str(data[1]))
+                data = self._q1.get()
+                print("X1 Data is:" + str(data[C_X_IDX]))
+                print("y1 Data is:" + str(data[C_Y_IDX]))
+                data = self._q2.get()
+                print("X2 Data is:" + str(data[C_X_IDX]))
+                print("y2 Data is:" + str(data[C_Y_IDX]))
                 time.sleep(1)
+
+            else:
+                return
+
+    def _mPlayerThread(self):
+        while(True):
+            if self.mExitRequest == False:
+                self.mErasePaddle(self._player1)
+                self.mErasePaddle(self._player2)
+                self.mUpdatePlayerPos()
+                self.mDrawPaddle(self._player1)
+                self.mDrawPaddle(self._player2)
+                time.sleep(0.1)
 
             else:
                 return
@@ -153,6 +237,7 @@ class Pong():
         self._lcd.mClearScreen()
 
     def mRunGame(self):
+        playerThread = Thread(target = self._mPlayerThread)
         dataThread = Thread(target = self._mPrintJoyData)
         joyThread = Thread(target = self._mJoyStickThread)
         ballThreads = []
@@ -165,6 +250,8 @@ class Pong():
 
         joyThread.start()
         dataThread.start()
+        playerThread.start()
+
         try:
             while(True):
                 time.sleep(0.5)

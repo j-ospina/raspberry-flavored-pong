@@ -31,22 +31,25 @@ class Player(paddle):
 
     def mMovePlayer(self, LeftOrRight, dX):
         if LeftOrRight.lower() == "left":
-            delta = self._player.xLoc - (self.WIDTH >> 1) - dX
+            delta = self.xLoc - (self.WIDTH >> 1) - dX
             if delta < C_LCD_MIN_X:
                 newLoc = self.WIDTH >> 1
 
             else:
-                newLoc = self._player.xLoc - dX
+                newLoc = self.xLoc - dX
 
         elif LeftOrRight.lower() == "right":
-            delta = self._player.xLoc + (self.WIDTH >> 1) + dX
+            delta = self.xLoc + (self.WIDTH >> 1) + dX
             if delta > C_LCD_MAX_X - 1:
                 newLoc = C_LCD_MAX_X - (self.WIDTH >> 1) - 1
 
             else:
-                newLoc = self._player.xLoc + dX
+                newLoc = self.xLoc + dX
 
         else:
             raise Exception("left nor right chosen")
 
-        self._player.xLoc = newLoc
+        self.xLoc = newLoc
+
+    def mGetLoc(self):
+        return (self.xLoc, self.yLoc)

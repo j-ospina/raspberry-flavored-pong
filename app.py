@@ -30,7 +30,7 @@ def main():
     # Instantiate the clas
     pong = Pong()
     # Create 5 balls with random velocities
-    pong.mCreatBalls(myColors, 5)
+    pong.mCreateBalls(myColors, 3)
 
     #TODO: Fix ball start location logic such that the velocity does not get negated if it starts to
     #      close to the wall.

@@ -45,6 +45,7 @@ C_CMD_DISPLAY_ON            = 0x29
 C_DATA_8BIT_DB_16BIT_PIXEL  = 0x05   
 
 # COLORS
+C_COLOR_BLACK               = 0x0000
 C_COLOR_PURPLE              = 0x685A
 C_COLOR_PINK                = 0xF85A
 C_COLOR_LIGHT_GREEN         = 0x1EB0
@@ -56,6 +57,7 @@ C_COLOR_YELLOW              = 0xFEC0
 C_COLOR_GREEN               = 0x07E0
 C_COLOR_INDIGO              = 0x4810
 C_COLOR_VIOLET              = 0x881F
+C_COLOR_WHITE               = 0xFFFF
 
 #############################################################################################
 # END - Constants

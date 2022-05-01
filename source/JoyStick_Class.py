@@ -33,6 +33,9 @@ class JoySticks(MCP3008ADC):
         self.mSPI.max_speed_hz = 1_000_000 # Spec says ~1.35 MHz (increase this once on PCB)
         self.mSPI.mode = 0b00 # Phase and Polarity are sample on rising edge and clk rests low.
 
+    def mGetMidVal(self):
+        return self._midVal
+
     # To be called after and only after self.mSetDataChx() where x can be [0, 7]
     def _mDataTransfer(self):
         wWord  =  self.getDataWord()

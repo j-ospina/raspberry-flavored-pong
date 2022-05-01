@@ -33,6 +33,7 @@ __all__ = [
     "C_CMD_DISPLAY_ON",
     "C_CMD_NORMAL_DISP_MODE",
     "C_DATA_8BIT_DB_16BIT_PIXEL",
+    "C_COLOR_BLACK",
     "C_COLOR_PURPLE",
     "C_COLOR_PINK",
     "C_COLOR_LIGHT_GREEN",
@@ -43,5 +44,6 @@ __all__ = [
     "C_COLOR_YELLOW",
     "C_COLOR_GREEN",
     "C_COLOR_INDIGO",
-    "C_COLOR_VIOLET"
+    "C_COLOR_VIOLET",
+    "C_COLOR_WHITE"
 ]
