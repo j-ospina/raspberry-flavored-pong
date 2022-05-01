@@ -7,7 +7,7 @@
 from LCD_Class import waveShareDisplay
 from LCD_Constants import *
 from JoyStick_Class import JoySticks
-from PongBall import PongBall
+from PongBall_Class import PongBall
 from threading import Thread, Semaphore
 import queue
 import time
