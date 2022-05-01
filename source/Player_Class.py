@@ -1,7 +1,7 @@
 #############################################################################################
 #      Author: Austin Harrison
 #        Date: 01MAY2022
-# Description: This file defines the player.
+# Description: This file defines the player and associated paddle.
 #############################################################################################
 
 from LCD_Constants import *
@@ -11,6 +11,7 @@ class paddle():
         self.xLoc = xLoc
         self.yLoc = yLoc        
 
+# The constructor expects a string argument "one" or "two"
 class Player(paddle):
     def __init__(self, playerNum):
         if playerNum.lower() == "one":

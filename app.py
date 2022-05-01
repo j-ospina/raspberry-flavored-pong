@@ -7,10 +7,7 @@ import time
 import sys
 sys.path.insert(0, './source')
 from source.LCD_Constants import *
-from source.LCD_Class import waveShareDisplay
-from source.JoyStick_Class import JoySticks
 from source.PongGame import Pong
-import random
 import subprocess as sp
 
 # GPIO11 - SPICLK
