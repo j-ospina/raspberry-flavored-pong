@@ -13,6 +13,8 @@ import queue
 import time
 import random
 
+C_MAX_BALLS = 3
+
 #############################################################################################
 # BEGIN - Class Definitions
 #############################################################################################
@@ -27,12 +29,14 @@ class Pong():
 
     # This method spawns balls
     def mCreateBall(self, color, location):
-        self._balls.append(PongBall(color,location))
+        if len(self._balls) < (C_MAX_BALLS + 1):
+            self._balls.append(PongBall(color,location))
 
     # Deletes the selected ball object
     def mKillBall(self, ballNum):
         if self._balls != [] and ballNum < len(self._balls):
             self._balls[ballNum].mAlive = False
+            self._mEraseBall(ballNum)
 
     # Adjusts a ball's velocity
     def mChangeBallVelocity(self, ballNum, newVelocity):
@@ -40,18 +44,19 @@ class Pong():
 
     # Creates N balls of random color
     def mCreatBalls(self, colors, N):
-        for i in range(N):
-            startX = 0
-            startY = 0
-            color = colors[random.randint(0, len(colors) - 1)]
-            while startX == 0:
-                startX = random.randint(-3, 3)
+        if N < C_MAX_BALLS:
+            for i in range(N):
+                startX = 0
+                startY = 0
+                color = colors[random.randint(0, len(colors) - 1)]
+                while startX == 0:
+                    startX = random.randint(-3, 3)
 
-            while startY == 0:
-                startY = random.randint(-3, 3)
+                while startY == 0:
+                    startY = random.randint(-3, 3)
 
-            self.mCreateBall(color, (100, 100))
-            self.mChangeBallVelocity(i, (startX, startY))
+                self.mCreateBall(color, (100, 100))
+                self.mChangeBallVelocity(i, (startX, startY))
 
     # Moves the ball
     def _mMoveBall(self, ballNum):
@@ -101,11 +106,13 @@ class Pong():
 
     def _mBallThreads(self, ballNum):
         while(1):
-            if not self._balls[ballNum].mAlive or self.mExitRequest == True:
-                #temp = self._balls[ballNum]
-                #self._balls.pop(ballNum)
-                #del temp
-                return
+            if not self._balls[ballNum].mAlive:
+                temp = self._balls[ballNum]
+                self._balls.pop(ballNum)
+                del temp
+                
+            elif self.mExitRequest == True:
+                return 
 
             else:
                 self._spiSem.acquire()
