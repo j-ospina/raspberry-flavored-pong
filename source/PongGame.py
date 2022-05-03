@@ -39,18 +39,18 @@ class Pong():
         self.mExitRequest   = False
         self.mNumBalls      = 0
 
-    def mNormalizeADC(self, val):
-        if val <= 127:
-            return 0
+    def _mNormalizeADC(self, val):
+        if val <= 127 or val >= 896:
+            return 5
 
-        elif 127 < val <= 254:
-            return 1
+        elif 127 < val <= 254 or 896 > val >= 769:
+            return 4
 
-        elif 254 < val <= 381:
-            return 2
-
-        elif 381 < val <= 511:
+        elif 254 < val <= 381 or 769 > val > 642:
             return 3
+            
+        elif 381 < val or 642 > val:
+            return 0
 
     def mUpdatePlayerPos(self):
         p1 = self._q1.get()
@@ -59,25 +59,24 @@ class Pong():
         mag2 = p2[C_X_IDX]
         # mag1 <= 511
         if mag1 <= self._joystick.mGetMidVal():
-            moveDir1 = "Left"
+            moveDir1 = "left"
         
         # mag1 > 511
         else:
-            mag1 -= 511
-            moveDir1 = "Right"
+            moveDir1 = "right"
 
         # mag2 <= 511
         if mag2 <= self._joystick.mGetMidVal():
-            moveDir2 = "Left"
+            moveDir2 = "left"
         
         # mag1 > 511
         else:
-            mag2 -= 511
-            moveDir2 = "Right"
-
-        mag1 = self.mNormalizeADC(mag1)
-        mag2 = self.mNormalizeADC(mag2)
+            moveDir2 = "right"
+            
+        mag1 = self._mNormalizeADC(mag1)
         self._player1.mMovePlayer(moveDir1, mag1)
+
+        mag2 = self._mNormalizeADC(mag2)
         self._player2.mMovePlayer(moveDir2, mag2)
 
     # This could be optimized probably.
@@ -145,15 +144,26 @@ class Pong():
                 # previous position
                 endPixel   = xPrev - (player.WIDTH >> 1)
 
-            # Update the previous location to current location.
-            player.mUpdatePrevLoc(p)
             self._spiSem.acquire()
             # TODO: Change this to draw to a page rather than 1 pixel at a time.
             for i in range(startPixel, endPixel):
                 self._lcd.mSetPixel(i , p[C_Y_IDX], player.color)
 
             self._spiSem.release()
+        
+        # Update the previous location to current location.
+        player.mUpdatePrevLoc(p)
 
+    # Draws the paddle for the first time.
+    def _mDrawPaddleInitial(self, player):
+        xy = player.mGetLoc()
+        startPixel = xy[C_X_IDX] - (player.WIDTH >> 1)
+        endPixel   = xy[C_X_IDX] + (player.WIDTH >> 1)
+        self._spiSem.acquire()
+        for i in range(startPixel, endPixel):
+            self._lcd.mSetPixel(i, xy[C_Y_IDX], player.color)
+
+        self._spiSem.release()
 
     # This method spawns balls
     def mCreateBall(self, color, location):
@@ -276,7 +286,7 @@ class Pong():
                 dy = self._balls[ballNum]._pos.y - self._balls[i]._pos.y
             )
             if minkowski != C_NO_COLLISION:
-                print("Collision" + str(ballNum) + ":" + str(minkowski))
+                #print("Collision" + str(ballNum) + ":" + str(minkowski))
                 self._mReverseBallOnCollision(ballNum, minkowski)
                 self._mReverseBallOnCollision(i,       minkowski)
                 break
@@ -332,6 +342,8 @@ class Pong():
                 return
 
     def _mPlayerThread(self):
+        self._mDrawPaddleInitial(self._player1)
+        self._mDrawPaddleInitial(self._player2)
         while(True):
             if self.mExitRequest == False:
                 self.mUpdatePlayerPos()
@@ -339,7 +351,7 @@ class Pong():
                 self.mDrawPaddle(self._player1)
                 self.mErasePaddle(self._player2)
                 self.mDrawPaddle(self._player2)
-                time.sleep(0.01)
+                time.sleep(0.0001)
 
             else:
                 return

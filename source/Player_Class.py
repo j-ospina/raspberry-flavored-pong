@@ -50,7 +50,7 @@ class Player(paddle):
                 newLoc = self.xLoc + dX
 
         else:
-            raise Exception("left nor right chosen")
+            newLoc = self.xLoc
 
         self.xLoc = newLoc
 
