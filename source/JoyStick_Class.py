@@ -6,9 +6,7 @@
 #############################################################################################
 
 from MCP3008_Class import MCP3008ADC
-#from gpiozero import OutputDevice
 import spidev
-#import time
 
 C_DEAD_ZONE_CORRECTION  = 25
 C_10_BIT_MIN            = 0x000
@@ -18,7 +16,7 @@ C_10_BIT_MAX            = 0x3FF
 # BEGIN - Class Definitions
 #############################################################################################
 class JoySticks(MCP3008ADC):
-    def __init__(self):
+    def __init__(self) -> None:
         # Call the ADC Constructor
         super().__init__()
         # Set private values 
@@ -33,11 +31,12 @@ class JoySticks(MCP3008ADC):
         self.mSPI.max_speed_hz = 1_000_000 # Spec says ~1.35 MHz (increase this once on PCB)
         self.mSPI.mode = 0b00 # Phase and Polarity are sample on rising edge and clk rests low.
 
-    def mGetMidVal(self):
+    # This returns the middle value of a 10-bit number. i.e. 0x3FF >> 1.
+    def mGetMidVal(self) -> int:
         return self._midVal
 
     # To be called after and only after self.mSetDataChx() where x can be [0, 7]
-    def _mDataTransfer(self):
+    def _mDataTransfer(self) -> list:
         wWord  =  self.getDataWord()
         wByte2 = (wWord >> 8) & 0xFF
         wByte1 =  wWord & 0xFF
@@ -45,7 +44,8 @@ class JoySticks(MCP3008ADC):
         return self.mSPI.xfer([wByte2, wByte1, wByte0])
 
     # Add this to the read mReadJoyx functions if there is drift.
-    def _mAdjustForDrift(self, xVal, yVal):
+    # Returns 2x Integers
+    def _mAdjustForDrift(self, xVal: int, yVal: int) -> int:
         if self._lowerDeadZone < xVal < self._upperDeadZone:
             xVal = self._midVal
 
@@ -54,7 +54,9 @@ class JoySticks(MCP3008ADC):
 
         return xVal, yVal
 
-    def mReadJoy0(self):
+    # Reads the 0th Joystick (associated with player 1)
+    # returns 2 values of type int.
+    def mReadJoy0(self) -> int:
         # Setup to read X-axis
         self.setDataCh0()
         # Get the word to write
@@ -70,7 +72,9 @@ class JoySticks(MCP3008ADC):
         #return self._mAdjustForDrift(valueX, valueY)
         return valueX, valueY
 
-    def mReadJoy1(self):
+    # Reads the 1st Joystick (associated with player 2)
+    # returns 2 values of type int.
+    def mReadJoy1(self) -> int:
         # Setup to read X-axis
         self.setDataCh2()
         # Get the word to write
@@ -87,7 +91,7 @@ class JoySticks(MCP3008ADC):
         return valueX, valueY
 
     # Call this on exit to close the Hardware SPI interface.
-    def mShutdown(self):
+    def mShutdown(self) -> None:
         self.mSPI.close()
 
 

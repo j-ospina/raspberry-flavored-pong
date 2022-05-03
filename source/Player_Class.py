@@ -7,8 +7,10 @@
 from LCD_Constants import *
 from source.PongBall_Class import C_X_IDX, C_Y_IDX
 
+# The constructor expects the 2 arguments, the initial x location and
+# the initial Y location.
 class paddle():
-    def __init__(self, xLoc, yLoc):
+    def __init__(self, xLoc: int, yLoc: int) -> None:
         self.xLoc   = xLoc
         self.yLoc   = yLoc
         self.prevX  = xLoc
@@ -18,7 +20,7 @@ class paddle():
 
 # The constructor expects a string argument "one" or "two"
 class Player(paddle):
-    def __init__(self, playerNum):
+    def __init__(self, playerNum: str) -> None:
         if playerNum.lower() == "one":
             self._player    = 1
             self.color      = C_COLOR_BLUE
@@ -32,7 +34,9 @@ class Player(paddle):
         else:
             raise Exception("Player improperly initialized {}".format(playerNum))
 
-    def mMovePlayer(self, LeftOrRight, dX):
+
+    # Moves the player-paddle left or right by amount dX
+    def mMovePlayer(self, LeftOrRight: str, dX: int) -> None:
         if LeftOrRight.lower() == "left":
             delta = self.xLoc - (self.WIDTH >> 1) - dX
             if delta < C_LCD_MIN_X:
@@ -55,14 +59,14 @@ class Player(paddle):
         self.xLoc = newLoc
 
     # Returns current location in tuple formatted (x, y)
-    def mGetLoc(self):
+    def mGetLoc(self) -> tuple:
         return (self.xLoc, self.yLoc)
 
     # Returns previous location in a tuple formatted (x, y)
-    def mGetPrevLoc(self):
+    def mGetPrevLoc(self) -> tuple:
         return (self.prevX, self.prevY)
 
     # Takes in a tuple argument formatted (x, y)
-    def mUpdatePrevLoc(self, newLoc):
+    def mUpdatePrevLoc(self, newLoc) -> tuple:
         self.prevX = newLoc[C_X_IDX]
         self.prevY = newLoc[C_Y_IDX]

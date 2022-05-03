@@ -27,7 +27,7 @@ C_BOTTOM_COLLISION  = -2
 # BEGIN - Class Definitions
 #############################################################################################
 class Pong():
-    def __init__(self):
+    def __init__(self) -> None:
         self._lcd           = waveShareDisplay()
         self._joystick      = JoySticks()
         self._balls         = []
@@ -39,7 +39,7 @@ class Pong():
         self.mExitRequest   = False
         self.mNumBalls      = 0
 
-    def _mNormalizeADC(self, val):
+    def _mNormalizeADC(self, val: int) -> int:
         if val <= 127 or val >= 896:
             return 5
 
@@ -52,7 +52,7 @@ class Pong():
         elif 381 < val or 642 > val:
             return 0
 
-    def mUpdatePlayerPos(self):
+    def mUpdatePlayerPos(self) -> None:
         p1 = self._q1.get()
         p2 = self._q2.get()
         mag1 = p1[C_X_IDX]
@@ -82,7 +82,7 @@ class Pong():
     # This could be optimized probably.
     # This member function erases the left side of the paddle if moving right
     # and vice versa.
-    def mErasePaddle(self, player):
+    def mErasePaddle(self, player: Player) -> None:
         p     = player.mGetLoc()
         pPrev = player.mGetPrevLoc()
         x     = p[C_X_IDX]
@@ -117,7 +117,7 @@ class Pong():
 
             self._spiSem.release()
 
-    def mDrawPaddle(self, player):
+    def mDrawPaddle(self, player: Player) -> None:
         p     = player.mGetLoc()
         pPrev = player.mGetPrevLoc()
         x     = p[C_X_IDX]
@@ -155,7 +155,7 @@ class Pong():
         player.mUpdatePrevLoc(p)
 
     # Draws the paddle for the first time.
-    def _mDrawPaddleInitial(self, player):
+    def _mDrawPaddleInitial(self, player: Player) -> None:
         xy = player.mGetLoc()
         startPixel = xy[C_X_IDX] - (player.WIDTH >> 1)
         endPixel   = xy[C_X_IDX] + (player.WIDTH >> 1)
@@ -166,23 +166,23 @@ class Pong():
         self._spiSem.release()
 
     # This method spawns balls
-    def mCreateBall(self, color, location):
+    def mCreateBall(self, color: int, location: tuple) -> None:
         self._balls.append(PongBall(color,location))
         self.mNumBalls += 1
 
     # Deletes the selected ball object
-    def mKillBall(self, ballNum):
+    def mKillBall(self, ballNum: int) -> None:
         if self._balls != [] and ballNum < len(self._balls):
             self._balls[ballNum].mAlive = False
             self._mEraseBall(ballNum)
             self.mNumBalls -= 1
 
     # Adjusts a ball's velocity
-    def mChangeBallVelocity(self, ballNum, newVelocity):
+    def mChangeBallVelocity(self, ballNum: int, newVelocity: tuple) -> None:
         self._balls[ballNum].mChangeVelocity(newVelocity)
 
     # Creates N balls of random color
-    def mCreateBalls(self, colors, N):
+    def mCreateBalls(self, colors: list, N: int) -> None:
         for i in range(N):
             startX = 0
             startY = 0
@@ -212,7 +212,7 @@ class Pong():
             self.mChangeBallVelocity(i, (startX, startY))
 
     # Moves the ball
-    def _mMoveBall(self, ballNum):
+    def _mMoveBall(self, ballNum: int) -> None:
         if self._balls != [] and ballNum < len(self._balls):
             self._balls[ballNum].mUpdatePosition()
 
@@ -221,7 +221,7 @@ class Pong():
 
     # Draws the ball
     # TODO: Change the balls shape.
-    def _mDrawBall(self, ballNum):
+    def _mDrawBall(self, ballNum: int) -> None:
         if self._balls[ballNum].mAlive:
             xy    = self._balls[ballNum].mGetPosition()
             color = self._balls[ballNum].mColor
@@ -235,7 +235,7 @@ class Pong():
            # self._lcd.mSetPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX] - 1, color)
 
     # Erases the ball
-    def _mEraseBall(self, ballNum):
+    def _mEraseBall(self, ballNum: int) -> None:
         if self._balls[ballNum].mAlive:
             xy    = self._balls[ballNum].mGetPosition()
             color = C_COLOR_BLACK
@@ -245,7 +245,7 @@ class Pong():
 
     # For now this member function reverses the direction of the ball when
     # it hits the edge of the screen
-    def _mCheckBallOutOfBounds(self, ballNum):
+    def _mCheckBallOutOfBounds(self, ballNum: int) -> None:
         if self._balls != []:
             if self._balls[ballNum].mAlive:
                 xy       = self._balls[ballNum].mGetPosition()
@@ -261,7 +261,7 @@ class Pong():
                 if (xy[C_Y_IDX] < self._lcd.mY_min + 1 + yBound) or (xy[C_Y_IDX] > self._lcd.mY_max - 2 - yBound):
                     self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX], velocity[C_Y_IDX] * -1))
 
-    def _mReverseBallOnCollision(self, ballNum, side):
+    def _mReverseBallOnCollision(self, ballNum: int, side: int) -> None:
         xy       = self._balls[ballNum].mGetPosition()
         velocity = self._balls[ballNum].mGetVelocity()
         if side == C_TOP_COLLISION or side == C_BOTTOM_COLLISION:
@@ -277,7 +277,7 @@ class Pong():
                                     Self.balls[Ball_Index].currentCenterX - Self.players[BOTTOM].currentCenter + PADDLE_LEN_D2 - (PADDLE_LEN / 6),
                                     Self.balls[Ball_Index].currentCenterY - BOTTOM_PLAYER_CENTER_Y);
     '''
-    def _mCheckBallColliders(self, ballNum):
+    def _mCheckBallColliders(self, ballNum: int) -> None:
         for i in range(ballNum + 1, self.mNumBalls):
             minkowski = self._mMinkowski(
                 w  = self._balls[ballNum].mGetRadius() * 2 + self._balls[i].mGetRadius() * 2,
@@ -291,7 +291,7 @@ class Pong():
                 self._mReverseBallOnCollision(i,       minkowski)
                 break
 
-    def _mBallThreads(self, ballNum):
+    def _mBallThreads(self, ballNum: int) -> None:
         while(True):
             if not self._balls[ballNum].mAlive:
                 temp = self._balls[ballNum]
@@ -313,7 +313,7 @@ class Pong():
             time.sleep(0.0001)
         
 
-    def _mJoyStickThread(self):
+    def _mJoyStickThread(self) -> None:
         while(True):
             if self.mExitRequest == False:
                 self._spiSem.acquire()
@@ -327,7 +327,7 @@ class Pong():
             else:
                 return
 
-    def _mPrintJoyData(self):
+    def _mPrintJoyData(self) -> None:
         while(True):
             if self.mExitRequest == False:
                 data = self._q1.get()
@@ -341,7 +341,7 @@ class Pong():
             else:
                 return
 
-    def _mPlayerThread(self):
+    def _mPlayerThread(self) -> None:
         self._mDrawPaddleInitial(self._player1)
         self._mDrawPaddleInitial(self._player2)
         while(True):
@@ -365,7 +365,7 @@ class Pong():
                                     Self.balls[Ball_Index].currentCenterX - Self.players[BOTTOM].currentCenter + PADDLE_LEN_D2 - (PADDLE_LEN / 6),
                                     Self.balls[Ball_Index].currentCenterY - BOTTOM_PLAYER_CENTER_Y);
     '''
-    def _mMinkowski(self, w, h, dx, dy):
+    def _mMinkowski(self, w: int, h: int, dx: int, dy: int) -> int:
         if abs(dx) <= w and abs(dy) <= h:
             wy = w*dy
             hx = h*dx
@@ -390,11 +390,11 @@ class Pong():
         else:
             return C_NO_COLLISION
 
-    def mInit(self):
+    def mInit(self) -> None:
         self._lcd.mInitialize()
         self._lcd.mClearScreen()
 
-    def mRunGame(self):
+    def mRunGame(self) -> None:
         #dataThread = Thread(target = self._mPrintJoyData)
         joyThread = Thread(target = self._mJoyStickThread)
         playerThread = Thread(target = self._mPlayerThread)

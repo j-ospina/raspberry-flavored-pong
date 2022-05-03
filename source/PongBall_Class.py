@@ -14,11 +14,11 @@ C_Y_IDX        = 1
 # This Class is for all intents and purposes a Struct. Pass a tuple in form (x, y) to it's 
 # constructor
 class _ballPosition():
-    def __init__(self, Position_tuple):
+    def __init__(self, Position_tuple: tuple) -> None:
         self.x = Position_tuple[C_X_IDX]
         self.y = Position_tuple[C_Y_IDX]
 
-    def mUpdatePosition(self, Position_tuple):
+    def mUpdatePosition(self, Position_tuple: tuple) -> None:
         self.x = Position_tuple[C_X_IDX]
         self.y = Position_tuple[C_Y_IDX]
 
@@ -33,7 +33,7 @@ class _ballPosition():
 #  0000
 #   00
 class PongBall():
-    def __init__(self, ballColor, initCoordinates):
+    def __init__(self, ballColor: int, initCoordinates: tuple) -> None:
         self._pos           = _ballPosition(initCoordinates)
         self.mPos           = self._pos
         self._radius        = 2                 # Update to 3 later
@@ -42,25 +42,25 @@ class PongBall():
         self.mAlive         = True
 
     # Updates the position based upon current velocity
-    def mUpdatePosition(self):
+    def mUpdatePosition(self) -> None:
         newX = self._pos.x + self._mVelocity[C_X_IDX]
         newY = self._pos.y + self._mVelocity[C_Y_IDX]
         self._pos.mUpdatePosition((newX, newY))
 
     # Returns a tuple in format (xPosition, yPosition)
-    def mGetPosition(self):
+    def mGetPosition(self) -> tuple:
         return (self._pos.x, self._pos.y)
 
     # This member function expects a tuple in form: (xVelocity, yVelocity)
-    def mChangeVelocity(self, newVelocity):
+    def mChangeVelocity(self, newVelocity: tuple) -> None:
         self._mVelocity = newVelocity
 
     # This member function returns a tuple of the x and y velocitys
-    def mGetVelocity(self):
+    def mGetVelocity(self) -> tuple:
         return self._mVelocity
 
     # Returns the radius value
-    def mGetRadius(self):
+    def mGetRadius(self) -> int:
         return self._radius
 
 #############################################################################################

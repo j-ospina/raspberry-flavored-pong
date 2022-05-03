@@ -14,7 +14,7 @@ import time
 # BEGIN - Class Definitions
 #############################################################################################
 class waveShareDisplay():
-    def __init__(self):
+    def __init__(self) -> None:
         self.mX_min     = 0
         self.mY_min     = 0
         self.mWidth     = 240 # pixels wide
@@ -32,50 +32,51 @@ class waveShareDisplay():
         
 
     # This private member function sets the Data not Command pin to command mode
-    def _mEnterCmdMode(self):
+    def _mEnterCmdMode(self) -> None:
         self._cs0.on()
         self._dc.off()
 
     # This private member function sets the Data not Command pin to data mode
-    def _mEnterDataMode(self):
+    def _mEnterDataMode(self) -> None:
         self._cs0.on()
         self._dc.on()
 
     # This member function turns off the back light
-    def mTurnOffBackLight(self):
+    def mTurnOffBackLight(self) -> None:
         self._bl.off()
 
     # This member function turns on the back light    
-    def mTurnOnBackLight(self):
+    def mTurnOnBackLight(self) -> None:
         self._bl.on()
 
     # This performs a hardware reset for 200ms. 400ms total
-    def mReset(self):
+    def mReset(self) -> None:
         self._nRst.on()
         time.sleep(0.2)
         self._nRst.off()
         time.sleep(0.2)
 
     # This member function performs a command write. It expects commands formatted in bytes.
-    def mWriteCMD(self, cmd):
+    def mWriteCMD(self, cmd: int) -> None:
         self._mEnterCmdMode()
         self.mSPI_if.writebytes([cmd])
 
     # This member function performs a data write. It expects bytes of data.
-    def mWriteData(self, data):
+    def mWriteData(self, data: int) -> None:
         self._mEnterDataMode()
         self.mSPI_if.writebytes([data])
         self._cs0.off()
 
     # This member function closes the spi module
-    def mShutdown(self):
+    def mShutdown(self) -> None:
         self.mTurnOffBackLight()
         self.mSPI_if.close()
         self._dc.close()
         self._bl.close()
         self._nRst.close()
 
-    def mInitialize(self):
+    # Initializes the LCD with various writes as described in the datasheet.
+    def mInitialize(self) -> None:
         self.mReset()
         
         self.mWriteCMD(C_CMD_MEM_DAT_ACCESS_CTL)
@@ -174,7 +175,7 @@ class waveShareDisplay():
         # End of mInitialize
 
     # Call this before Drawing to the LCD
-    def mSetDrawWindow(self, bX, eX, bY, eY):
+    def mSetDrawWindow(self, bX: int, eX: int, bY: int, eY: int) -> None:
         # Set X - coordinates
         self.mWriteCMD(C_CMD_COL_ADDR_SET)
         self.mWriteData(bY >> 8)
@@ -192,7 +193,7 @@ class waveShareDisplay():
         # Write to memory
         self.mWriteCMD(C_CMD_MEM_WRITE)
 
-    def mSetCursor(self, xPos, yPos):
+    def mSetCursor(self, xPos: int, yPos: int):
         self.mWriteCMD(C_CMD_COL_ADDR_SET)
         self.mWriteData(yPos >> 8)
         self.mWriteData(yPos)
@@ -208,7 +209,8 @@ class waveShareDisplay():
         # Enable Writes to memory
         self.mWriteCMD(C_CMD_MEM_WRITE)
 
-    def mClearScreen(self):
+    # Clears the whole screen with black pixels
+    def mClearScreen(self) -> None:
         _buffer = [0x00]*(self.mWidth * self.mHeight * 2)
         self.mSetDrawWindow(0, self.mWidth-1, 0, self.mHeight-1)
         self._mEnterDataMode()
@@ -217,7 +219,8 @@ class waveShareDisplay():
             
         self._cs0.off()
 
-    def mSetPixel(self, xPos, yPos, color):
+    # Sets a singular pixel
+    def mSetPixel(self, xPos: int, yPos: int, color: int) -> None:
         _buffer = [(color>>8) & 0xFF, color & 0xFF]
         self.mSetCursor(xPos, yPos)
         self._mEnterDataMode()
@@ -226,10 +229,14 @@ class waveShareDisplay():
         
         self._cs0.off()
 
-    def mClearPixel(self, xPos, yPos):
+    # Clears a singular pixel
+    def mClearPixel(self, xPos: int, yPos: int) -> None:
         self.mSetPixel(xPos, yPos, 0x00)
 
-    def mDrawLine(self, axis, start, end):
+    # Draws a line on an axis 
+    # TODO: adjust this so you can pick starting x/y loc
+    # right now arbitrarily hardcoded to 15.
+    def mDrawLine(self, axis: str, start: int, end: int) -> None:
         if axis == 'X' or axis == 'x':
             for i in range(end - start):
                 self.mSetPixel(start + i, 15, C_COLOR_PINK)
