@@ -5,11 +5,14 @@
 #############################################################################################
 
 from LCD_Constants import *
+from source.PongBall_Class import C_X_IDX, C_Y_IDX
 
 class paddle():
     def __init__(self, xLoc, yLoc):
         self.xLoc   = xLoc
         self.yLoc   = yLoc
+        self.prevX  = xLoc
+        self.prevY  = yLoc
         self.WIDTH  = 30
         self.HEIGHT = 3        
 
@@ -51,5 +54,15 @@ class Player(paddle):
 
         self.xLoc = newLoc
 
+    # Returns current location in tuple formatted (x, y)
     def mGetLoc(self):
         return (self.xLoc, self.yLoc)
+
+    # Returns previous location in a tuple formatted (x, y)
+    def mGetPrevLoc(self):
+        return (self.prevX, self.prevY)
+
+    # Takes in a tuple argument formatted (x, y)
+    def mUpdatePrevLoc(self, newLoc):
+        self.prevX = newLoc[C_X_IDX]
+        self.prevY = newLoc[C_Y_IDX]

@@ -80,27 +80,80 @@ class Pong():
         self._player1.mMovePlayer(moveDir1, mag1)
         self._player2.mMovePlayer(moveDir2, mag2)
 
+    # This could be optimized probably.
+    # This member function erases the left side of the paddle if moving right
+    # and vice versa.
     def mErasePaddle(self, player):
-        p = player.mGetLoc()
-        start = p[C_X_IDX] - (player.WIDTH >> 1)
-        end   = p[C_X_IDX] + (player.WIDTH >> 1)
-        self._spiSem.acquire()
-        # TODO: Change this to draw to a page rather than 1 pixel at a time.
-        for i in range(start, end):
-            self._lcd.mSetPixel(i , p[C_Y_IDX], C_COLOR_BLACK)
-            
-        self._spiSem.release()
+        p     = player.mGetLoc()
+        pPrev = player.mGetPrevLoc()
+        x     = p[C_X_IDX]
+        xPrev = pPrev[C_X_IDX]
+        if x != xPrev:
+            if x > xPrev:
+                deltaX     = x - xPrev
+                # Moving Right
+                # Start pixel for erasure on the left end should be the
+                # previous x minus half the width
+                startPixel = xPrev - (player.WIDTH >> 1)
+                # The end pixel would be the left end of the paddle plus
+                # the delta (x - xPrev) for Erasure
+                endPixel   = xPrev - (player.WIDTH >> 1) + deltaX
+                
+            # xPrev > x
+            else:
+                deltaX     = xPrev - x
+                # Moving Left
+                # Start pixel would be the right end of the paddle of the
+                # Previous position minus the dX for Erasure
+                startPixel = xPrev + (player.WIDTH >> 1) - deltaX
+                # The end pixel would be the left end of the paddle of the 
+                # previous position
+                endPixel   = xPrev + (player.WIDTH >> 1)
+
+            # Update the previous location to current location.
+            self._spiSem.acquire()
+            # TODO: Change this to draw to a page rather than 1 pixel at a time.
+            for i in range(startPixel, endPixel):
+                self._lcd.mSetPixel(i , p[C_Y_IDX], C_COLOR_BLACK)
+
+            self._spiSem.release()
 
     def mDrawPaddle(self, player):
-        p = player.mGetLoc()
-        start = p[C_X_IDX] - (player.WIDTH >> 1)
-        end   = p[C_X_IDX] + (player.WIDTH >> 1)
-        self._spiSem.acquire()
-        # TODO: Change this to draw to a page rather than 1 pixel at a time.
-        for i in range(start, end):
-            self._lcd.mSetPixel(i , p[C_Y_IDX], player.color)
+        p     = player.mGetLoc()
+        pPrev = player.mGetPrevLoc()
+        x     = p[C_X_IDX]
+        xPrev = pPrev[C_X_IDX]
+        if x != xPrev:
+            if x > xPrev:
+                deltaX     = x - xPrev
+                # Moving Right
+                # Start pixel would be the right end of the paddle of the 
+                # previous position
+                startPixel = xPrev + (player.WIDTH >> 1)
+                # The end pixel would be the right end of the paddle plus
+                # the delta (x - xPrev)
+                endPixel   = xPrev + (player.WIDTH >> 1) + deltaX
+                
+            # xPrev > x
+            else:
+                deltaX     = xPrev - x
+                # Moving Left
+                # Start pixel would be the left end of the paddle of the
+                # Previous position minus the dX
+                startPixel = xPrev - (player.WIDTH >> 1) - deltaX
+                # The end pixel would be the left end of the paddle of the 
+                # previous position
+                endPixel   = xPrev - (player.WIDTH >> 1)
 
-        self._spiSem.release()
+            # Update the previous location to current location.
+            player.mUpdatePrevLoc(p)
+            self._spiSem.acquire()
+            # TODO: Change this to draw to a page rather than 1 pixel at a time.
+            for i in range(startPixel, endPixel):
+                self._lcd.mSetPixel(i , p[C_Y_IDX], player.color)
+
+            self._spiSem.release()
+
 
     # This method spawns balls
     def mCreateBall(self, color, location):
@@ -247,7 +300,7 @@ class Pong():
                 self._mDrawBall(ballNum)
                 self._spiSem.release()
 
-            time.sleep(0.001)
+            time.sleep(0.0001)
         
 
     def _mJoyStickThread(self):
@@ -281,12 +334,12 @@ class Pong():
     def _mPlayerThread(self):
         while(True):
             if self.mExitRequest == False:
-                self.mErasePaddle(self._player1)
-                self.mErasePaddle(self._player2)
                 self.mUpdatePlayerPos()
+                self.mErasePaddle(self._player1)
                 self.mDrawPaddle(self._player1)
+                self.mErasePaddle(self._player2)
                 self.mDrawPaddle(self._player2)
-                time.sleep(0.1)
+                time.sleep(0.01)
 
             else:
                 return
@@ -330,9 +383,9 @@ class Pong():
         self._lcd.mClearScreen()
 
     def mRunGame(self):
-        #playerThread = Thread(target = self._mPlayerThread)
         #dataThread = Thread(target = self._mPrintJoyData)
         joyThread = Thread(target = self._mJoyStickThread)
+        playerThread = Thread(target = self._mPlayerThread)
         ballThreads = []
         for i in range(len(self._balls)):
             ballThread = Thread(target = self._mBallThreads, args = (i,))
@@ -343,7 +396,7 @@ class Pong():
 
         joyThread.start()
         #dataThread.start()
-        #playerThread.start()
+        playerThread.start()
 
         try:
             while(True):
@@ -356,7 +409,7 @@ class Pong():
                 thread.join()
 
             #dataThread.join()
-            #playerThread.join()
+            playerThread.join()
             self._lcd.mClearScreen()
             self._lcd.mShutdown()
             self._joystick.mShutdown()
