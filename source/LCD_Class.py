@@ -5,6 +5,9 @@
 #              2-inch IPS LCD screen.
 #############################################################################################
 
+# TODO: Write functions that set windows to write to rather than just relying on writing one
+# pixel per SPI transfer.
+
 from LCD_Constants import *
 from gpiozero import OutputDevice
 import spidev
@@ -19,34 +22,36 @@ class waveShareDisplay():
     def __init__(self) -> None:
         self.mX_min     = 0
         self.mY_min     = 0
-        self.mWidth     = 240 # pixels wide
-        self.mHeight    = 320 # pixels high
-        self.mX_max     = 240
-        self.mY_max     = 320
+        self.mWidth     = C_LCD_MAX_X # 240pixels wide
+        self.mHeight    = C_LCD_MAX_Y # 320 pixels high
+        self.mX_max     = C_LCD_MAX_X
+        self.mY_max     = C_LCD_MAX_Y
         self._dc        = OutputDevice(pin = C_PIN_DC,  active_high = True, initial_value = True) # Data not Command
         self._bl        = OutputDevice(pin = C_PIN_BL,  active_high = True, initial_value = True)
         self._nRst      = OutputDevice(pin = C_PIN_RST, active_high = False, initial_value = False)
-        self._cs0       = OutputDevice(pin = C_PIN_CS0, active_high = False, initial_value = False)
+        #self._cs0       = OutputDevice(pin = C_PIN_CS0, active_high = False, initial_value = False)
         self.mSPI_if    = spidev.SpiDev()
-        self.mSPI_if.open(0, 0)
+        self.mSPI_if.open(C_LCD_PORT_NUM, C_LCD_DEV_NUM)
         self.mSPI_if.max_speed_hz = C_MAX_FREQ_HZ
-        self.mSPI_if.mode = 0b00
+        self.mSPI_if.mode = C_LCD_MODE
         
 
     # This private member function sets the Data not Command pin to command mode
     def _mEnterCmdMode(self) -> None:
-        self._cs0.on()
+        #self._cs0.on()
         self._dc.off()
 
     # This private member function sets the Data not Command pin to data mode
     def _mEnterDataMode(self) -> None:
-        self._cs0.on()
+        #self._cs0.on()
         self._dc.on()
 
+    # TODO: Figure out why this seems to do nada.
     # This member function turns off the back light
     def mTurnOffBackLight(self) -> None:
         self._bl.off()
 
+    # TODO: Figure out why this seems to do nada.
     # This member function turns on the back light    
     def mTurnOnBackLight(self) -> None:
         self._bl.on()
@@ -67,7 +72,7 @@ class waveShareDisplay():
     def mWriteData(self, data: int) -> None:
         self._mEnterDataMode()
         self.mSPI_if.writebytes([data])
-        self._cs0.off()
+        #self._cs0.off()
 
     # This member function closes the spi module
     def mShutdown(self) -> None:
@@ -78,6 +83,7 @@ class waveShareDisplay():
         self._nRst.close()
 
     # Initializes the LCD with various writes as described in the datasheet.
+    # The Hard coded values are part of the initialization procedure.
     def mInitialize(self) -> None:
         self.mReset()
         
@@ -94,7 +100,7 @@ class waveShareDisplay():
         self.mWriteCMD(C_CMD_COL_ADDR_SET)
         self.mWriteData(C_ZERO_BYTE)
         self.mWriteData(0x01)
-        self.mWriteData(C_ZERO_BYTE) # TODO: Figure out what these hardcoded values are
+        self.mWriteData(C_ZERO_BYTE)
         self.mWriteData(0x3F)
         # Set row address and write 4 bytes
         self.mWriteCMD(C_CMD_ROW_ADDR_SET)
@@ -219,7 +225,7 @@ class waveShareDisplay():
         for i in range(0,len(_buffer),4096):
             self.mSPI_if.writebytes(_buffer[i:i+4096])
             
-        self._cs0.off()
+        #self._cs0.off()
 
     # Sets a singular pixel
     def mSetPixel(self, xPos: int, yPos: int, color: int) -> None:
@@ -229,7 +235,7 @@ class waveShareDisplay():
         for i in range(0, len(_buffer), 2):
             self.mSPI_if.writebytes(_buffer[i:i+2])
         
-        self._cs0.off()
+        #self._cs0.off()
 
     # Clears a singular pixel
     def mClearPixel(self, xPos: int, yPos: int) -> None:

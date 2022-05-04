@@ -2,6 +2,7 @@ __all__ = [
     "C_PIN_BL",
     "C_PIN_RST",
     "C_PIN_DC",
+    "C_LCD_MODE",
     "C_LCD_DEV_NUM",
     "C_LCD_PORT_NUM",
     "C_LCD_MIN_X",

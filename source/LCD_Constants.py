@@ -11,6 +11,7 @@ C_PIN_CS0                   = 16        # TODO: Figure out if this is doing anyt
 C_PIN_BL                    = 23
 C_PIN_RST                   = 24
 C_PIN_DC                    = 25
+C_LCD_MODE                  = 0b00
 C_LCD_DEV_NUM               = 0
 C_LCD_PORT_NUM              = 0
 C_LCD_MIN_X                 = 0

@@ -7,7 +7,7 @@ from sre_constants import FAILURE, SUCCESS
 import sys
 sys.path.insert(0, './source')
 from source.LCD_Constants import *
-from source.PongGame_Class import Pong
+from source.PongGame_Class import Pong, C_MAX_BALLS
 import subprocess as sp
 
 # Leave this until diagrams are created and uploaded to git.
@@ -19,7 +19,6 @@ import subprocess as sp
 
 FAILURE         = -1
 SUCCESS         =  0
-C_MAX_BALLS     =  7
 
 def main():
     # Turn on hardware SPI
@@ -37,8 +36,6 @@ def main():
     # Create C_MAX_BALLS balls with random velocities
     pong.mCreateBalls(myColors, C_MAX_BALLS)
 
-    #TODO: Fix ball start location logic such that the velocity does not get negated if it starts to
-    #      close to the wall.
     # Initialize the LCD and the ADC
     pong.mInit()
     # Main Game loop (Runs on threads with semaphores and a Queue for inter-process communication).
