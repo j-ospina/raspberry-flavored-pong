@@ -42,10 +42,14 @@ class PongBall():
         self.mAlive         = True
 
     # Updates the position based upon current velocity
-    def mUpdatePosition(self) -> None:
-        newX = self._pos.x + self._mVelocity[C_X_IDX]
-        newY = self._pos.y + self._mVelocity[C_Y_IDX]
-        self._pos.mUpdatePosition((newX, newY))
+    def mUpdatePosition(self, location : tuple) -> None:
+        if location is None:
+            newX = self._pos.x + self._mVelocity[C_X_IDX]
+            newY = self._pos.y + self._mVelocity[C_Y_IDX]
+            self._pos.mUpdatePosition((newX, newY))
+
+        else: 
+            self._pos.mUpdatePosition(location)
 
     # Returns a tuple in format (xPosition, yPosition)
     def mGetPosition(self) -> tuple:

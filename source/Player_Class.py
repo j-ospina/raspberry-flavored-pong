@@ -15,7 +15,7 @@ class paddle():
         self.yLoc   = yLoc
         self.prevX  = xLoc
         self.prevY  = yLoc
-        self.WIDTH  = 30
+        self.WIDTH  = 40
         self.HEIGHT = 3        
 
 # The constructor expects a string argument "one" or "two"

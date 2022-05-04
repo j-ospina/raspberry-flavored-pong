@@ -4,6 +4,7 @@
 # Description: This Class is the Top Level Game Abstraction
 #############################################################################################
 
+from hashlib import new
 from LCD_Class import waveShareDisplay
 from LCD_Constants import *
 from JoyStick_Class import JoySticks
@@ -14,7 +15,7 @@ import queue
 import time
 import random
 
-C_MAX_BALLS         =  3
+C_MAX_BALLS         =  10
 C_X_IDX             =  0
 C_Y_IDX             =  1
 C_TOP_COLLISION     =  2
@@ -22,6 +23,7 @@ C_RIGHT_COLLISION   =  1
 C_NO_COLLISION      =  0
 C_LEFT_COLLISION    = -1
 C_BOTTOM_COLLISION  = -2
+C_WIGGLE_ROOM       =  2
 
 #############################################################################################
 # BEGIN - Class Definitions
@@ -165,56 +167,60 @@ class Pong():
 
         self._spiSem.release()
 
-    # This method spawns balls
-    def mCreateBall(self, color: int, location: tuple) -> None:
-        self._balls.append(PongBall(color,location))
-        self.mNumBalls += 1
+    # This method spawns balls that were killed
+    def mCreateBall(self, location: tuple) -> None:
+        maxBalls = len(self._balls)
+        if self.mNumBalls < maxBalls:
+            newBallMade = False
+            while not newBallMade:
+                ballNum = random.randint(0, len(self._balls) - 1)
+                if not self._balls[ballNum].mAlive:
+                    newVelY = 0
+                    while newVelY == 0:
+                        newVelY = random.randint(-4, 4)
+                        time.sleep(0.01)
+
+                    newVelX = random.randint(-4, 4)
+                    self._balls[ballNum].mUpdatePosition(location)
+                    self._balls[ballNum].mChangeVelocity((newVelX, newVelY))
+                    self._balls[ballNum].mAlive = True
+                    newBallMade = True
+                
+                else:
+                    time.sleep(0.01)
+
+            self.mNumBalls += 1
 
     # Deletes the selected ball object
     def mKillBall(self, ballNum: int) -> None:
         if self._balls != [] and ballNum < len(self._balls):
-            self._balls[ballNum].mAlive = False
             self._mEraseBall(ballNum)
             self.mNumBalls -= 1
+            self._balls[ballNum].mAlive = False
 
     # Adjusts a ball's velocity
     def mChangeBallVelocity(self, ballNum: int, newVelocity: tuple) -> None:
         self._balls[ballNum].mChangeVelocity(newVelocity)
 
-    # Creates N balls of random color
+    # Creates N balls of random color (Initial call)
     def mCreateBalls(self, colors: list, N: int) -> None:
         for i in range(N):
             startX = 0
             startY = 0
             color = colors[random.randint(0, len(colors) - 1)]
-            startX = random.randint(-3, 3)
+            startX = random.randint(-4, 4)
 
-            if startX == 0:
-                while startY == 0:
-                    startY = random.randint(-3, 3)
+            while startY == 0:
+                startY = random.randint(-4, 4)
 
-            else:
-                startY = random.randint(-3, 3)
-
-            if startY > 0:
-                startY += 2
-
-            elif startY < 0:
-                startY -= 2
-
-            if startX > 0:
-                startX += 2
-
-            elif startX < 0:
-                startX -= 2
-                
-            self.mCreateBall(color, (random.randint(20, 220), random.randint(20, 300)))
+            ball = PongBall(color, (random.randint(20, 220), random.randint(20, 300)))
+            self._balls.append(ball)
             self.mChangeBallVelocity(i, (startX, startY))
 
     # Moves the ball
     def _mMoveBall(self, ballNum: int) -> None:
         if self._balls != [] and ballNum < len(self._balls):
-            self._balls[ballNum].mUpdatePosition()
+            self._balls[ballNum].mUpdatePosition(None)
 
         else:
             print("No balls exist")
@@ -222,26 +228,23 @@ class Pong():
     # Draws the ball
     # TODO: Change the balls shape.
     def _mDrawBall(self, ballNum: int) -> None:
-        if self._balls[ballNum].mAlive:
-            xy    = self._balls[ballNum].mGetPosition()
-            color = self._balls[ballNum].mColor
-            for i in range(self._balls[ballNum].mGetRadius()*2):
-                for j in range(self._balls[ballNum].mGetRadius()*2):
-                    self._lcd.mSetPixel(xy[C_X_IDX] + i, xy[C_Y_IDX] + j, color)
-
-           # self._lcd.mSetPixel(xy[C_X_IDX],     xy[C_Y_IDX],     color)
-           # self._lcd.mSetPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX],     color)
-           # self._lcd.mSetPixel(xy[C_X_IDX],     xy[C_Y_IDX] - 1, color)
-           # self._lcd.mSetPixel(xy[C_X_IDX] + 1, xy[C_Y_IDX] - 1, color)
+        if ballNum < len(self._balls):
+            if self._balls[ballNum].mAlive:
+                xy    = self._balls[ballNum].mGetPosition()
+                color = self._balls[ballNum].mColor
+                for i in range(self._balls[ballNum].mGetRadius()*2):
+                    for j in range(self._balls[ballNum].mGetRadius()*2):
+                        self._lcd.mSetPixel(xy[C_X_IDX] + i, xy[C_Y_IDX] + j, color)
 
     # Erases the ball
     def _mEraseBall(self, ballNum: int) -> None:
-        if self._balls[ballNum].mAlive:
-            xy    = self._balls[ballNum].mGetPosition()
-            color = C_COLOR_BLACK
-            for i in range(self._balls[ballNum].mGetRadius()*2):
-                for j in range(self._balls[ballNum].mGetRadius()*2):
-                    self._lcd.mSetPixel(xy[C_X_IDX] + i, xy[C_Y_IDX] + j, color)
+        if ballNum < len(self._balls):
+            if self._balls[ballNum].mAlive:
+                xy    = self._balls[ballNum].mGetPosition()
+                color = C_COLOR_BLACK
+                for i in range(self._balls[ballNum].mGetRadius()*2):
+                    for j in range(self._balls[ballNum].mGetRadius()*2):
+                        self._lcd.mSetPixel(xy[C_X_IDX] + i, xy[C_Y_IDX] + j, color)
 
     # For now this member function reverses the direction of the ball when
     # it hits the edge of the screen
@@ -259,7 +262,8 @@ class Pong():
                     self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX] * -1, velocity[C_Y_IDX]))
         
                 if (xy[C_Y_IDX] < self._lcd.mY_min + 1 + yBound) or (xy[C_Y_IDX] > self._lcd.mY_max - 2 - yBound):
-                    self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX], velocity[C_Y_IDX] * -1))
+                #    self.mChangeBallVelocity(ballNum, (velocity[C_X_IDX], velocity[C_Y_IDX] * -1))
+                    self.mKillBall(ballNum)
 
     def _mReverseBallOnCollision(self, ballNum: int, side: int) -> None:
         xy       = self._balls[ballNum].mGetPosition()
@@ -289,27 +293,54 @@ class Pong():
                 #print("Collision" + str(ballNum) + ":" + str(minkowski))
                 self._mReverseBallOnCollision(ballNum, minkowski)
                 self._mReverseBallOnCollision(i,       minkowski)
-                break
+            
+        p1XY = self._player1.mGetLoc()
+        p1X  = p1XY[C_X_IDX]
+        p1Y  = p1XY[C_Y_IDX]
+        p2XY = self._player2.mGetLoc()
+        p2X  = p2XY[C_X_IDX]
+        p2Y  = p2XY[C_Y_IDX]
+        # Check P1 paddle
+        minkowski = self._mMinkowski(
+            w  = self._balls[ballNum].mGetRadius() * 2 + self._player1.WIDTH + C_WIGGLE_ROOM,
+            h  = self._balls[ballNum].mGetRadius() * 2 + self._player1.HEIGHT,
+            dx = self._balls[ballNum].mPos.x - p1X,
+            dy = self._balls[ballNum].mPos.y - p1Y
+        )
+
+        if minkowski != C_NO_COLLISION:
+            #print("Player Number: " + str(self._player1._player))
+            #print("Collision" + str(ballNum) + ":" + str(minkowski))
+            self._mReverseBallOnCollision(ballNum, minkowski)
+
+        # Check P2 paddle
+        minkowski = self._mMinkowski(
+            w  = self._balls[ballNum].mGetRadius() * 2 + self._player2.WIDTH + C_WIGGLE_ROOM,
+            h  = self._balls[ballNum].mGetRadius() * 2 + self._player2.HEIGHT,
+            dx = self._balls[ballNum].mPos.x - p2X,
+            dy = self._balls[ballNum].mPos.y - p2Y
+        )
+
+        if minkowski != C_NO_COLLISION:
+            #print("Collision" + str(ballNum) + ":" + str(minkowski))
+            self._mReverseBallOnCollision(ballNum, minkowski)
+
 
     def _mBallThreads(self, ballNum: int) -> None:
         while(True):
-            if not self._balls[ballNum].mAlive:
-                temp = self._balls[ballNum]
-                self._balls.pop(ballNum)
-                del temp
-                
-            elif self.mExitRequest == True:
+            if self.mExitRequest == True:
                 return 
 
             else:
-                self._spiSem.acquire()
-                self._mEraseBall(ballNum)
-                self._mMoveBall(ballNum)
-                self._mCheckBallOutOfBounds(ballNum)
-                self._mCheckBallColliders(ballNum)
-                self._mDrawBall(ballNum)
-                self._spiSem.release()
-
+                if self._balls[ballNum].mAlive:
+                    self._spiSem.acquire()
+                    self._mEraseBall(ballNum)
+                    self._mMoveBall(ballNum)
+                    self._mCheckBallOutOfBounds(ballNum)
+                    self._mCheckBallColliders(ballNum)
+                    self._mDrawBall(ballNum)
+                    self._spiSem.release()
+                
             time.sleep(0.0001)
         
 
@@ -356,6 +387,12 @@ class Pong():
             else:
                 return
 
+    def _mBallSpawnThread(self) -> None:
+        while not self.mExitRequest:
+            time.sleep(3)
+            if self.mNumBalls < len(self._balls):
+                self.mCreateBall(location = (120, 160))
+
     # The minkowski algorithm is a fast way of detecting collisions and
     # and the side they occured on.
     '''
@@ -396,6 +433,7 @@ class Pong():
 
     def mRunGame(self) -> None:
         #dataThread = Thread(target = self._mPrintJoyData)
+        spawnThread = Thread(target = self._mBallSpawnThread)
         joyThread = Thread(target = self._mJoyStickThread)
         playerThread = Thread(target = self._mPlayerThread)
         ballThreads = []
@@ -409,10 +447,11 @@ class Pong():
         joyThread.start()
         #dataThread.start()
         playerThread.start()
+        spawnThread.start()
 
         try:
-            while(True):
-                time.sleep(0.5)
+            while True:
+                time.sleep(0.2)
 
         except KeyboardInterrupt:
             self.mExitRequest = True
@@ -421,6 +460,7 @@ class Pong():
                 thread.join()
 
             #dataThread.join()
+            spawnThread.join()
             playerThread.join()
             self._lcd.mClearScreen()
             self._lcd.mShutdown()

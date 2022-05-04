@@ -16,6 +16,8 @@ import subprocess as sp
 # GPIO8  - SPI CE0
 # GPIO7  - SPI CE1
 
+C_MAX_BALLS =   10
+
 def main():
     # Turn on hardware SPI
     sp.run(["sudo", "dtparam", "spi=on"])
@@ -30,7 +32,7 @@ def main():
     # Instantiate the clas
     pong = Pong()
     # Create 5 balls with random velocities
-    pong.mCreateBalls(myColors, 10)
+    pong.mCreateBalls(myColors, C_MAX_BALLS)
 
     #TODO: Fix ball start location logic such that the velocity does not get negated if it starts to
     #      close to the wall.

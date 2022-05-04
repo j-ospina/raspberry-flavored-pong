@@ -10,6 +10,8 @@ from gpiozero import OutputDevice
 import spidev
 import time
 
+C_MAX_FREQ_HZ = 30_000_000
+
 #############################################################################################
 # BEGIN - Class Definitions
 #############################################################################################
@@ -27,7 +29,7 @@ class waveShareDisplay():
         self._cs0       = OutputDevice(pin = C_PIN_CS0, active_high = False, initial_value = False)
         self.mSPI_if    = spidev.SpiDev()
         self.mSPI_if.open(0, 0)
-        self.mSPI_if.max_speed_hz = 20_000_000
+        self.mSPI_if.max_speed_hz = C_MAX_FREQ_HZ
         self.mSPI_if.mode = 0b00
         
 
