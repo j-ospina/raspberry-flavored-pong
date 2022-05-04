@@ -7,7 +7,7 @@ from sre_constants import FAILURE, SUCCESS
 import sys
 sys.path.insert(0, './source')
 from source.LCD_Constants import *
-from source.PongGame import Pong
+from source.PongGame_Class import Pong
 import subprocess as sp
 
 # Leave this until diagrams are created and uploaded to git.
