@@ -3,20 +3,23 @@
 #        Date: 01MAY2022
 # Description: This file instantiates the Pong Game and runs it.
 #############################################################################################
-import time
+from sre_constants import FAILURE, SUCCESS
 import sys
 sys.path.insert(0, './source')
 from source.LCD_Constants import *
 from source.PongGame import Pong
 import subprocess as sp
 
+# Leave this until diagrams are created and uploaded to git.
 # GPIO11 - SPICLK
 # GPIO10 - SPI MOSI
 # GPIO9  - SPI MISO
 # GPIO8  - SPI CE0
 # GPIO7  - SPI CE1
 
-C_MAX_BALLS =   10
+FAILURE         = -1
+SUCCESS         =  0
+C_MAX_BALLS     =  7
 
 def main():
     # Turn on hardware SPI
@@ -31,7 +34,7 @@ def main():
 
     # Instantiate the clas
     pong = Pong()
-    # Create 5 balls with random velocities
+    # Create C_MAX_BALLS balls with random velocities
     pong.mCreateBalls(myColors, C_MAX_BALLS)
 
     #TODO: Fix ball start location logic such that the velocity does not get negated if it starts to
@@ -43,7 +46,7 @@ def main():
 
     # Turn off Hardware spi
     sp.run(["sudo", "dtparam", "spi=off"])
-
+    sys.exit(SUCCESS)
 
 if __name__ == "__main__":
     main()

@@ -14,8 +14,8 @@ from threading import Thread, Semaphore
 import queue
 import time
 import random
+from app import C_MAX_BALLS
 
-C_MAX_BALLS         =  10
 C_X_IDX             =  0
 C_Y_IDX             =  1
 C_TOP_COLLISION     =  2
