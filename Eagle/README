@@ -1,0 +1,16 @@
+##############################################################################################
+#   Author(s): Austin Harrison
+#        Date: 06MAY2022
+# Description: README To describe how to setup Eagle with this project.
+##############################################################################################
+
+1) Pull this project
+2) Open Eagle and go to:
+ >Toolbar
+ >Options
+ >Directories
+3) With Libraries active, click browse and navigate to the directory this project is located.
+4) Open the /Eagle/lib folder and click "Select Folder".
+5) With Projects active, click browse and navigate to the directory this project is located.
+6) Open the the /Eagle/Projects folder and click "Select Folder". 
+7) The eagle project should now be availbale for opening and editing.
