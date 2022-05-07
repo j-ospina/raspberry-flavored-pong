@@ -4,7 +4,6 @@
 # Description: This Class is the Top Level Game Abstraction
 #############################################################################################
 
-from hashlib import new
 from LCD_Class import waveShareDisplay
 from LCD_Constants import *
 from JoyStick_Class import JoySticks

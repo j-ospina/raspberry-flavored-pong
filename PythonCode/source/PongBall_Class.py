@@ -25,13 +25,12 @@ class _ballPosition():
 # The ballColor argument needs to be a 16 bit value in the 565 RGB format
 # The initial Coordinates argument needs to be a tuple in format (x, y)
 # The ball looks like this where 0 is a pixel:
-# TODO: Draw balls like this instead of 2x2 square
-#   00
-#  0000
-# 000000
-# 000000
-#  0000
-#   00
+#
+# 0000
+# 0000
+# 0000
+# 0000
+#
 class PongBall():
     def __init__(self, ballColor: int, initCoordinates: tuple) -> None:
         self._pos           = _ballPosition(initCoordinates)
@@ -41,8 +40,10 @@ class PongBall():
         self._mVelocity     = (0, 0)            # default to not moving
         self.mAlive         = True
 
-    # Updates the position based upon current velocity
-    def mUpdatePosition(self, location : tuple) -> None:
+    # Updates the position based upon current velocity, or 
+    # if the tuple provided is not none, it moves to the
+    # provided coordinates.
+    def mUpdatePosition(self, location: tuple) -> None:
         if location is None:
             newX = self._pos.x + self._mVelocity[C_X_IDX]
             newY = self._pos.y + self._mVelocity[C_Y_IDX]
